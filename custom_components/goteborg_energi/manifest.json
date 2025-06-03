@@ -1,0 +1,14 @@
+{
+  "domain": "goteborg_energi",
+  "name": "Göteborgs Energi Elpriser",
+  "codeowners": ["@your_github_username"],
+  "config_flow": true,
+  "documentation": "https://github.com/your_username/goteborg_energi",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/your_username/goteborg_energi/issues",
+  "requirements": [],
+  "ssdp": [],
+  "version": "1.0.0",
+  "zeroconf": []
+}
