@@ -13,6 +13,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.entity import DeviceInfo
 
 # Konstant för valuta (SEK)
 CURRENCY_KRONA = "SEK"
@@ -65,11 +66,20 @@ class GoteborgEnergiBaseSensor(CoordinatorEntity, SensorEntity):
         try:
             super().__init__(coordinator)
             self._sensor_type = sensor_type
-            self._attr_name = f"Göteborgs Energi {name}"
+            self._attr_name = name  # Ta bort "Göteborgs Energi" prefix
             self._attr_unique_id = f"goteborg_energi_{sensor_type}"
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_state_class = SensorStateClass.MEASUREMENT
             self._attr_native_unit_of_measurement = f"{CURRENCY_KRONA}/{UnitOfEnergy.KILO_WATT_HOUR}"
+            
+            # Lägg till device-information för att gruppera sensorerna
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, "goteborg_energi")},
+                name="Göteborgs Energi",
+                manufacturer="Göteborg Energi",
+                model="Elpriser",
+                sw_version="1.0.0",
+            )
             _LOGGER.debug("Lyckades initiera sensor: %s", self._attr_unique_id)
         except Exception as err:
             _LOGGER.error("Fel vid initiering av sensor %s: %s", name, err, exc_info=True)
