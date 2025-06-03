@@ -1,8 +1,8 @@
 # Göteborgs Energi Elpriser - Home Assistant Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-[![Version](https://img.shields.io/github/v/release/your-username/goteborg-energi-ha)](https://github.com/your-username/goteborg-energi-ha/releases)
-[![License](https://img.shields.io/github/license/your-username/goteborg-energi-ha)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/bratland/goteborg-energi-ha)](https://github.com/bratland/goteborg-energi-ha/releases)
+[![License](https://img.shields.io/github/license/bratland/goteborg-energi-ha)](LICENSE)
 
 En Home Assistant-integration som visar kompletta elpriser för Göteborg genom att kombinera spotpriser från öppna API:er med Göteborgs Energis elnätstavgifter.
 
@@ -27,7 +27,7 @@ Denna integration ger dig full insyn i dina elkostnader i Göteborg genom att:
 1. Öppna **HACS** i Home Assistant
 2. Gå till **Integrationer**
 3. Klicka på **⋮** → **Anpassade förråd**
-4. Lägg till: `https://github.com/ditt-användarnamn/goteborg-energi-ha`
+4. Lägg till: `https://github.com/bratland/goteborg-energi-ha`
 5. Kategori: **Integration**
 6. Sök efter "**Göteborgs Energi Elpriser**" och installera
 7. Starta om Home Assistant
