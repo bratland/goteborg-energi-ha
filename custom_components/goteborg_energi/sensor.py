@@ -1,4 +1,5 @@
 """Sensorer för Göteborgs Energi elpriser."""
+import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -8,10 +9,18 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfEnergy, CURRENCY_KRONA
+from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+# Fallback för CURRENCY_KRONA om det inte finns i denna HA-version
+try:
+    from homeassistant.const import CURRENCY_KRONA
+except ImportError:
+    CURRENCY_KRONA = "SEK"
+
+_LOGGER = logging.getLogger(__name__)
 
 from .const import (
     DOMAIN,
@@ -28,30 +37,46 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Sätt upp sensorer för Göteborgs Energi."""
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    _LOGGER.debug("Sätter upp sensorer för Göteborgs Energi")
     
-    entities = [
-        GoteborgEnergiSpotPriceSensor(coordinator, SENSOR_CURRENT_SPOT_PRICE, "Nuvarande Elpris"),
-        GoteborgEnergiSpotPriceSensor(coordinator, SENSOR_NEXT_HOUR_SPOT_PRICE, "Nästa Timmes Elpris"),
-        GoteborgEnergiGridPriceSensor(coordinator, SENSOR_GRID_ENERGY_PRICE, "Elnätsavgift Energi"),
-        GoteborgEnergiGridPriceSensor(coordinator, SENSOR_GRID_POWER_PRICE, "Elnätsavgift Effekt"),
-        GoteborgEnergiTotalPriceSensor(coordinator, SENSOR_TOTAL_PRICE, "Totalt Elpris"),
-    ]
-    
-    async_add_entities(entities)
+    try:
+        coordinator = hass.data[DOMAIN][config_entry.entry_id]
+        _LOGGER.debug("Hittade coordinator för entry %s", config_entry.entry_id)
+        
+        entities = [
+            GoteborgEnergiSpotPriceSensor(coordinator, SENSOR_CURRENT_SPOT_PRICE, "Nuvarande Elpris"),
+            GoteborgEnergiSpotPriceSensor(coordinator, SENSOR_NEXT_HOUR_SPOT_PRICE, "Nästa Timmes Elpris"),
+            GoteborgEnergiGridPriceSensor(coordinator, SENSOR_GRID_ENERGY_PRICE, "Elnätsavgift Energi"),
+            GoteborgEnergiGridPriceSensor(coordinator, SENSOR_GRID_POWER_PRICE, "Elnätsavgift Effekt"),
+            GoteborgEnergiTotalPriceSensor(coordinator, SENSOR_TOTAL_PRICE, "Totalt Elpris"),
+        ]
+        
+        _LOGGER.debug("Skapade %d sensorer", len(entities))
+        async_add_entities(entities)
+        _LOGGER.info("Lyckades sätta upp %d sensorer för Göteborgs Energi", len(entities))
+        
+    except Exception as err:
+        _LOGGER.error("Fel vid setup av sensorer: %s", err, exc_info=True)
+        raise
 
 class GoteborgEnergiBaseSensor(CoordinatorEntity, SensorEntity):
     """Basklass för Göteborgs Energi sensorer."""
     
     def __init__(self, coordinator, sensor_type: str, name: str) -> None:
         """Initiera sensorn."""
-        super().__init__(coordinator)
-        self._sensor_type = sensor_type
-        self._attr_name = f"Göteborgs Energi {name}"
-        self._attr_unique_id = f"goteborg_energi_{sensor_type}"
-        self._attr_device_class = SensorDeviceClass.MONETARY
-        self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_native_unit_of_measurement = f"{CURRENCY_KRONA}/{UnitOfEnergy.KILO_WATT_HOUR}"
+        _LOGGER.debug("Initierar sensor: %s (typ: %s)", name, sensor_type)
+        try:
+            super().__init__(coordinator)
+            self._sensor_type = sensor_type
+            self._attr_name = f"Göteborgs Energi {name}"
+            self._attr_unique_id = f"goteborg_energi_{sensor_type}"
+            self._attr_device_class = SensorDeviceClass.MONETARY
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_native_unit_of_measurement = f"{CURRENCY_KRONA}/{UnitOfEnergy.KILO_WATT_HOUR}"
+            _LOGGER.debug("Lyckades initiera sensor: %s", self._attr_unique_id)
+        except Exception as err:
+            _LOGGER.error("Fel vid initiering av sensor %s: %s", name, err, exc_info=True)
+            raise
 
 class GoteborgEnergiSpotPriceSensor(GoteborgEnergiBaseSensor):
     """Sensor för spotpriser."""
