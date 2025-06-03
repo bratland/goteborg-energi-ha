@@ -1,7 +1,7 @@
 """API-klient för Göteborgs Energi elpriser."""
 import aiohttp
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Dict, Optional, Any
 
 from homeassistant.core import HomeAssistant
@@ -26,16 +26,33 @@ class GoteborgEnergiAPI:
         url = f"{ELPRISET_API_URL}/{today.year}/{today.month:02d}-{today.day:02d}_{ELECTRICITY_AREA}.json"
         
         try:
-            async with self.session.get(url) as response:
+            _LOGGER.debug("Försöker hämta spotpriser från: %s", url)
+            headers = {
+                'User-Agent': 'HomeAssistant/GoteborgEnergi-Integration'
+            }
+            async with self.session.get(url, headers=headers) as response:
                 if response.status == 200:
                     data = await response.json()
                     self._last_update = datetime.now()
+                    _LOGGER.debug("Lyckades hämta %d prispunkter", len(data) if data else 0)
                     return self._process_spot_prices(data)
                 else:
-                    _LOGGER.error("Fel vid hämtning av spotpriser: %s", response.status)
+                    _LOGGER.error("Fel vid hämtning av spotpriser från %s: HTTP %s", url, response.status)
+                    # Försök med gårdagens data som fallback
+                    yesterday = today - timedelta(days=1)
+                    fallback_url = f"{ELPRISET_API_URL}/{yesterday.year}/{yesterday.month:02d}-{yesterday.day:02d}_{ELECTRICITY_AREA}.json"
+                    _LOGGER.info("Försöker med gårdagens data: %s", fallback_url)
+                    async with self.session.get(fallback_url, headers=headers) as fallback_response:
+                        if fallback_response.status == 200:
+                            data = await fallback_response.json()
+                            self._last_update = datetime.now()
+                            return self._process_spot_prices(data)
                     return {}
         except aiohttp.ClientError as err:
-            _LOGGER.error("Nätverksfel vid hämtning av spotpriser: %s", err)
+            _LOGGER.error("Nätverksfel vid hämtning av spotpriser från %s: %s", url, err)
+            return {}
+        except Exception as err:
+            _LOGGER.error("Oväntat fel vid hämtning av spotpriser: %s", err)
             return {}
     
     def _process_spot_prices(self, data: Dict) -> Dict[str, Any]:
