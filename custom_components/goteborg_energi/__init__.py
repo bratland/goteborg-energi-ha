@@ -14,7 +14,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Sätt upp Göteborgs Energi från en config entry."""
     
     coordinator = GoteborgEnergiDataUpdateCoordinator(hass)
-    await coordinator.async_config_entry_first_refresh()
+    
+    # Försök att hämta initial data, men fortsätt även om det misslyckas
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as err:
+        _LOGGER.warning("Kunde inte hämta initial data vid setup: %s. Integrationen kommer att försöka igen senare.", err)
     
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
@@ -63,4 +68,9 @@ class GoteborgEnergiDataUpdateCoordinator(DataUpdateCoordinator):
             }
         except Exception as err:
             _LOGGER.error("Fel vid hämtning av elpriser: %s", err)
-            raise
+            # Returnera tom data istället för att kasta exception
+            return {
+                "spot_prices": {},
+                "grid_prices": {},
+                "last_update": None,
+            }
