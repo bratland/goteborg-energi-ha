@@ -14,11 +14,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-# Fallback för CURRENCY_KRONA om det inte finns i denna HA-version
-try:
-    from homeassistant.const import CURRENCY_KRONA
-except ImportError:
-    CURRENCY_KRONA = "SEK"
+# Konstant för valuta (SEK)
+CURRENCY_KRONA = "SEK"
 
 _LOGGER = logging.getLogger(__name__)
 
