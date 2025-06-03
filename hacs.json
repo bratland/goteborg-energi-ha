@@ -5,7 +5,5 @@
   "country": ["SE"],
   "hacs": "1.6.0",
   "homeassistant": "2023.1.0",
-  "render_readme": true,
-  "domains": ["sensor"],
-  "iot_class": "Cloud Polling"
+  "render_readme": true
 }
