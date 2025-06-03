@@ -98,10 +98,10 @@ class GoteborgEnergiSpotPriceSensor(GoteborgEnergiBaseSensor):
         
         if self._sensor_type == SENSOR_CURRENT_SPOT_PRICE:
             current = spot_prices.get("current")
-            return current["price"] if current else None
+            return round(current["price"], 2) if current else None
         elif self._sensor_type == SENSOR_NEXT_HOUR_SPOT_PRICE:
             next_hour = spot_prices.get("next_hour")
-            return next_hour["price"] if next_hour else None
+            return round(next_hour["price"], 2) if next_hour else None
         
         return None
     
@@ -112,10 +112,11 @@ class GoteborgEnergiSpotPriceSensor(GoteborgEnergiBaseSensor):
             return {}
         
         spot_prices = self.coordinator.data.get("spot_prices", {})
+        daily_avg = spot_prices.get("daily_average")
         attrs = {
             "area": "SE3",
             "location": "Göteborg",
-            "daily_average": spot_prices.get("daily_average"),
+            "daily_average": round(daily_avg, 2) if daily_avg is not None else None,
         }
         
         if self._sensor_type == SENSOR_CURRENT_SPOT_PRICE:
@@ -145,9 +146,9 @@ class GoteborgEnergiGridPriceSensor(GoteborgEnergiBaseSensor):
             energy_tax = grid_prices.get("energy_tax", 0)
             vat_rate = grid_prices.get("vat_rate", 0)
             # Energiavgift + energiskatt + moms
-            return (energy_tariff + energy_tax) * (1 + vat_rate)
+            return round((energy_tariff + energy_tax) * (1 + vat_rate), 2)
         elif self._sensor_type == SENSOR_GRID_POWER_PRICE:
-            return grid_prices.get("power_tariff", 0)
+            return round(grid_prices.get("power_tariff", 0), 2)
         
         return None
     
@@ -168,10 +169,10 @@ class GoteborgEnergiGridPriceSensor(GoteborgEnergiBaseSensor):
         
         if self._sensor_type == SENSOR_GRID_ENERGY_PRICE:
             return {
-                "energy_tariff": grid_prices.get("energy_tariff"),
-                "energy_tax": grid_prices.get("energy_tax"),
+                "energy_tariff": round(grid_prices.get("energy_tariff", 0), 2),
+                "energy_tax": round(grid_prices.get("energy_tax", 0), 2),
                 "vat_rate": grid_prices.get("vat_rate"),
-                "fixed_fee_monthly": grid_prices.get("fixed_fee"),
+                "fixed_fee_monthly": round(grid_prices.get("fixed_fee", 0), 2),
                 "description": "Elnätsavgift energi inkl. energiskatt och moms"
             }
         elif self._sensor_type == SENSOR_GRID_POWER_PRICE:
@@ -210,7 +211,7 @@ class GoteborgEnergiTotalPriceSensor(GoteborgEnergiBaseSensor):
         # Total kostnad (spotpris med moms + elnätsavgift)
         total_cost = (spot_price * (1 + vat_rate)) + grid_cost
         
-        return round(total_cost, 4)
+        return round(total_cost, 2)
     
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
@@ -232,14 +233,14 @@ class GoteborgEnergiTotalPriceSensor(GoteborgEnergiBaseSensor):
         grid_cost = (energy_tariff + energy_tax) * (1 + vat_rate)
         
         return {
-            "spot_price_excl_vat": spot_price,
-            "spot_price_incl_vat": round(spot_price * (1 + vat_rate), 4),
-            "grid_cost_incl_vat": round(grid_cost, 4),
-            "fixed_monthly_fee": grid_prices.get("fixed_fee"),
-            "power_tariff": grid_prices.get("power_tariff"),
+            "spot_price_excl_vat": round(spot_price, 2),
+            "spot_price_incl_vat": round(spot_price * (1 + vat_rate), 2),
+            "grid_cost_incl_vat": round(grid_cost, 2),
+            "fixed_monthly_fee": round(grid_prices.get("fixed_fee", 0), 2),
+            "power_tariff": round(grid_prices.get("power_tariff", 0), 2),
             "breakdown": {
-                "spotpris": round(spot_price * (1 + vat_rate), 4),
-                "elnätsavgift": round(grid_cost, 4),
-                "totalt": round((spot_price * (1 + vat_rate)) + grid_cost, 4)
+                "spotpris": round(spot_price * (1 + vat_rate), 2),
+                "elnätsavgift": round(grid_cost, 2),
+                "totalt": round((spot_price * (1 + vat_rate)) + grid_cost, 2)
             }
         }
